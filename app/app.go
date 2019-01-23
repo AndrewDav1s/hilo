@@ -84,8 +84,13 @@ import (
 	"github.com/cicizeo/hilo/x/hilo"
 )
 
-// Name defines the application name of the Hilo network.
-const Name = "hilo"
+const (
+	// Name defines the application name of the Hilo network.
+	Name = "hilo"
+
+	// BondDenom defines the native staking token denomination.
+	BondDenom = "uhilo"
+)
 
 var (
 	_ CosmosApp               = (*HiloApp)(nil)
