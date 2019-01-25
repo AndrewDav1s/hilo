@@ -1,3 +1,4 @@
+// nolint: gocritic
 package hilo
 
 import (
@@ -5,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/cicizeo/hilo/x/hilo/keeper"
 	"github.com/cicizeo/hilo/x/hilo/types"
 )

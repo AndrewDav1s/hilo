@@ -1,14 +1,13 @@
+// nolint: gocritic
 package keeper
 
 import (
-	// this line is used by starport scaffolding # 1
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/cicizeo/hilo/x/hilo/types"
-
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	"github.com/cicizeo/hilo/x/hilo/types"
 )
 
 func NewQuerier(k Keeper, legacyQuerierCdc *codec.LegacyAmino) sdk.Querier {
