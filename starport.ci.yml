@@ -1,0 +1,23 @@
+genesis:
+  chain_id: "hilo-local-testnet"
+  app_state:
+    staking:
+      params:
+        bond_denom: "uhilo"
+accounts:
+  - name: alice
+    coins: ["39000000000000uhilo"]
+  - name: bob
+    coins: ["5500000000000uhilo"]
+  - name: faucet
+    coins: ["5500000000000uhilo"]
+validator:
+  name: alice
+  staked: "33500000000000uhilo"
+servers:
+  dev-ui-address: "localhost:12345"
+faucet:
+  port: 4500
+  name: "faucet"
+  coins: ["5500000000000uhilo"]
+  coins_max: ["1000000000uhilo"]
