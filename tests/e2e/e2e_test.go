@@ -115,17 +115,28 @@ func (s *IntegrationTestSuite) TestHiloTokenTransfers() {
 	// is broken in cases where the native token uses non-zero decimals.
 	//
 	// Ref: https://github.com/PeggyJV/gravity-bridge/issues/130
+	//
+	// send 300 hilo tokens from Ethereum back to Hilo
+	s.Run("send_uhilo_tokens_from_eth", func() {
+		s.T().Skip("skipping; ref: https://github.com/PeggyJV/gravity-bridge/issues/130")
+		s.sendFromEthToHilo(1, hiloERC20Addr, s.chain.validators[0].keyInfo.GetAddress().String(), "300")
 
-	// send 300 hilo tokens Ethereum back to Hilo
-	// s.Run("send_uhilo_tokens_from_eth", func() {
-	// 	s.sendFromEthToHilo(1, hiloERC20Addr, s.chain.validators[0].keyInfo.GetAddress().String(), "300")
+		hiloEndpoint := fmt.Sprintf("http://%s", s.valResources[0].GetHostPort("1317/tcp"))
+		toAddr := s.chain.validators[0].keyInfo.GetAddress()
+		expBalance := 99999999887
 
-	// 	hiloEndpoint := fmt.Sprintf("http://%s", s.valResources[0].GetHostPort("1317/tcp"))
-	// 	toAddr := s.chain.validators[0].keyInfo.GetAddress()
+		// require the original sender's (validator) balance increased
+		s.Require().Eventually(
+			func() bool {
+				b, err := queryHiloDenomBalance(hiloEndpoint, toAddr.String(), "uhilo")
+				if err != nil {
+					return false
+				}
 
-	// 	// require the original sender's (validator) balance increased
-	// 	balance, err := queryHiloDenomBalance(hiloEndpoint, toAddr.String(), "uhilo")
-	// 	s.Require().NoError(err)
-	// 	s.Require().Equal(99999999887, balance)
-	// })
+				return b == expBalance
+			},
+			2*time.Minute,
+			5*time.Second,
+		)
+	})
 }
