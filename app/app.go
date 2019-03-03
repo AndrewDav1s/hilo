@@ -551,6 +551,8 @@ func (app *HiloApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 		panic(fmt.Sprintf("failed to unmarshal genesis state: %v", err))
 	}
 
+	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
+
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
 }
 

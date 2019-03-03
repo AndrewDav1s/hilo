@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 func (s *IntegrationTestSuite) TestPhotonTokenTransfers() {
@@ -11,6 +13,10 @@ func (s *IntegrationTestSuite) TestPhotonTokenTransfers() {
 	var photonERC20Addr string
 	s.Run("deploy_photon_erc20", func() {
 		photonERC20Addr = s.deployERC20Token("photon")
+		s.Require().NotEmpty(photonERC20Addr)
+
+		_, err := hexutil.Decode(photonERC20Addr)
+		s.Require().NoError(err)
 	})
 
 	// send 100 photon tokens from Hilo to Ethereum
@@ -76,6 +82,10 @@ func (s *IntegrationTestSuite) TestHiloTokenTransfers() {
 	var hiloERC20Addr string
 	s.Run("deploy_hilo_erc20", func() {
 		hiloERC20Addr = s.deployERC20Token("uhilo")
+		s.Require().NotEmpty(hiloERC20Addr)
+
+		_, err := hexutil.Decode(hiloERC20Addr)
+		s.Require().NoError(err)
 	})
 
 	// send 300 hilo tokens from Hilo to Ethereum
@@ -111,19 +121,13 @@ func (s *IntegrationTestSuite) TestHiloTokenTransfers() {
 		)
 	})
 
-	// BUG / TODO: Currently, sending tokens from Ethereum back to the cosmos zone
-	// is broken in cases where the native token uses non-zero decimals.
-	//
-	// Ref: https://github.com/PeggyJV/gravity-bridge/issues/130
-	//
 	// send 300 hilo tokens from Ethereum back to Hilo
 	s.Run("send_uhilo_tokens_from_eth", func() {
-		s.T().Skip("skipping; ref: https://github.com/PeggyJV/gravity-bridge/issues/130")
 		s.sendFromEthToHilo(1, hiloERC20Addr, s.chain.validators[0].keyInfo.GetAddress().String(), "300")
 
 		hiloEndpoint := fmt.Sprintf("http://%s", s.valResources[0].GetHostPort("1317/tcp"))
 		toAddr := s.chain.validators[0].keyInfo.GetAddress()
-		expBalance := 99999999887
+		expBalance := 9999999993
 
 		// require the original sender's (validator) balance increased
 		s.Require().Eventually(
