@@ -6,7 +6,6 @@
 [![Version](https://img.shields.io/github/tag/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/github/license/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/blob/main/LICENSE)
 [![Lines Of Code](https://img.shields.io/tokei/lines/github/cicizeo/hilo?style=flat-square)](https://github.com/cicizeo/hilo)
-<!-- [![Lint Status](https://github.com/cicizeo/hilo/workflows/Lint/badge.svg)](https://tokei.rs/b1/github/cicizeo/hilo) -->
 
 > A Golang implementation of the Hilo network, a decentralized universal capital
 facility in the Cosmos ecosystem.
@@ -22,53 +21,22 @@ Hilo will allow a multitude of decentralized debt products.
 
 - [Dependencies](#dependencies)
 - [Active Networks](#active-networks)
-- [Build](#build)
+- [Install](#install)
 
 ## Dependencies
 
 - [Go 1.16+](https://golang.org/dl/)
-- [Cosmos SDK v0.42.0+](https://github.com/cosmos/cosmos-sdk/releases)
+- [Cosmos SDK v0.43.0+](https://github.com/cosmos/cosmos-sdk/releases)
 - [Starport](https://docs.starport.network/intro/install.html)
 
 ## Active Networks
 
 Coming soon...
 
-## Build
+## Install
 
 To install the `hilod` binary:
 
 ```shell
 $ make install
 ```
-
-To run the linter:
-
-```shell
-$ make lint
-```
-
-## Local Network
-
-You can launch a local network for development and testing purposes via two
-mechanisms:
-
-1. Docker
-
-   ```shell
-   $ make clean localnet-start
-   ```
-
-   Running the `localnet-start` target will launch a basic four validator network
-   with the hilod binary and artifacts residing in the `./build` directory. A local
-   build of the `hilod` binary can be used to interact with the network by using a
-   home directory of any of the four validator nodes, e.g. `--home ./build/node0/hilod`.
-
-2. Starport
-
-   ```shell
-   $ starport serve
-   ```
-
-   Using the `starport` framework, a configurable local network can be created
-   with exposed RPC and API endpoints, in addition to a faucet.
