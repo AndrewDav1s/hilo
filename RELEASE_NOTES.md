@@ -1,3 +1,5 @@
+# Release Notes
+
 Initial release of the Hilo network application daemon. The release includes
 support for the following:
 
