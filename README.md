@@ -35,6 +35,7 @@ Hilo will allow a multitude of decentralized debt products.
 
 - Chain ID: `hilo-betanet-1`
 - Gravity Bridge Orchestrator Version: `v0.1.20`
+- Gravity Ethereum Network: `Görli`
 - Gravity Contract Address: `0xc846512f680a2161D2293dB04cbd6C294c5cFfA7`
 - Genesis: [genesis.json](https://raw.githubusercontent.com/cicizeo/hilo/main/networks/hilo-betanet-1/genesis.json)
 - Peers:
@@ -47,7 +48,7 @@ Hilo will allow a multitude of decentralized debt products.
 
 | Token 	| Display 	|                   Address                  	|
 |:-----:	|:-------:	|:------------------------------------------:	|
-| uhilo 	|   hilo  	| `0x29889b8e4785eEEb625848a9Fdc599Fb4569e292` 	|
+| uhilo 	|   hilo  	| [`0x29889b8e4785eEEb625848a9Fdc599Fb4569e292`](https://goerli.etherscan.io/address/0x29889b8e4785eEEb625848a9Fdc599Fb4569e292) 	|
 
 ## Install
 
