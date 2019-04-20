@@ -4,7 +4,7 @@
 
 - (deps) Update ibc-go to [v1.0.1](https://github.com/cosmos/ibc-go/releases/tag/v1.0.1)
   - Fixes a security vulnerability identified in transfer application (no funds are at risk)
-- (deps) Update gravity-bridge to [v0.1.23](https://github.com/PeggyJV/gravity-bridge/releases/tag/v0.1.23)
+- (deps) Update gravity-bridge to [v0.1.24](https://github.com/PeggyJV/gravity-bridge/releases/tag/v0.1.24)
   - Fixes typo in `send-to-ethereum` command
   - The `client` CLI is no longer needed; you can use `gorc deploy erc20` and `gorc eth-to-cosmos`
 
