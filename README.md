@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD041 -->
 ![Logo!](assets/hilo-small-logo.png)
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://img.shields.io/badge/repo%20status-WIP-yellow.svg?style=flat-square)](https://www.repostatus.org/#wip)
@@ -6,6 +7,7 @@
 [![Version](https://img.shields.io/github/tag/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/github/license/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/blob/main/LICENSE)
 [![Lines Of Code](https://img.shields.io/tokei/lines/github/cicizeo/hilo?style=flat-square)](https://github.com/cicizeo/hilo)
+[![GitHub Super-Linter](https://github.com/cicizeo/hilo/workflows/Run%20super-linter/badge.svg)](https://github.com/marketplace/actions/super-linter)
 
 > A Golang implementation of the Hilo network, a decentralized universal capital
 facility in the Cosmos ecosystem.
@@ -48,9 +50,9 @@ Hilo will allow a multitude of decentralized debt products.
 
 #### Deployed Tokens
 
-| Token 	| Display 	|                   Address                  	|
-|:-----:	|:-------:	|:------------------------------------------:	|
-| uhilo 	|   hilo  	| [`0x29889b8e4785eEEb625848a9Fdc599Fb4569e292`](https://goerli.etherscan.io/address/0x29889b8e4785eEEb625848a9Fdc599Fb4569e292) 	|
+| Token | Display |                   Address                  |
+|:-----:|:-------:|:------------------------------------------:|
+| uhilo |   hilo  | [`0x29889b8e4785eEEb625848a9Fdc599Fb4569e292`](https://goerli.etherscan.io/address/0x29889b8e4785eEEb625848a9Fdc599Fb4569e292) |
 
 ## Install
 
