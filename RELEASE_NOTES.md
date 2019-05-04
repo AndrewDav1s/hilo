@@ -1,21 +1,25 @@
 # Release Notes
 
-## Improvements
+Release v0.2.0 of the Hilo application. The release includes the following changes:
 
-- (deps) Update ibc-go to [v1.0.1](https://github.com/cosmos/ibc-go/releases/tag/v1.0.1)
-  - Fixes a security vulnerability identified in transfer application (no funds are at risk)
-- (deps) Update gravity-bridge to [v0.1.24](https://github.com/PeggyJV/gravity-bridge/releases/tag/v0.1.24)
-  - Fixes typo in `send-to-ethereum` command
-  - The `client` CLI is no longer needed; you can use `gorc deploy erc20` and `gorc eth-to-cosmos`
+## Features
 
-## Client Breaking Changes
+- Cosmos SDK version bumped to [v0.44.0](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.0)
+- Full IBC compatibility based on ibc-go [v1.2.0](https://github.com/cosmos/ibc-go/releases/tag/v1.2.0)
+- Gravity Bridge version bumped to [v0.2.7](https://github.com/PeggyJV/gravity-bridge/releases/tag/v0.2.7)
 
-- (gorc) The `metrics` config now only contains a single `listen_addr` field, e.g. `"127.0.0.1:3000"`
-- (gorc) The former `cosmos.gas_price` has moved to a `[cosmos.gas_price]` stanza
-  - Example:
+## Breaking Changes
 
-    ```toml
-    [cosmos.gas_price]
-    amount = 0.0001
-    denom = "uhilo"
-    ```
+- The `gorc` process for Gravity Bridge contains modifications to the configuration.
+  See the release for further details.
+
+e.g.
+
+```toml
+[cosmos.gas_price]
+amount = 0.00001
+denom = "uhilo"
+
+[metrics]
+listen_addr = "127.0.0.1:3000"
+```
