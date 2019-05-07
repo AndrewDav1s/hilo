@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/github/tag/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/github/license/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/blob/main/LICENSE)
 [![Lines Of Code](https://img.shields.io/tokei/lines/github/cicizeo/hilo?style=flat-square)](https://github.com/cicizeo/hilo)
-[![GitHub Super-Linter](https://github.com/cicizeo/hilo/workflows/Run%20super-linter/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![GitHub Super-Linter](https://img.shields.io/github/workflow/status/cicizeo/hilo/Lint?style=flat-square&label=Lint)](https://github.com/marketplace/actions/super-linter)
 
 > A Golang implementation of the Hilo network, a decentralized universal capital
 facility in the Cosmos ecosystem.
