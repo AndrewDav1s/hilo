@@ -36,6 +36,7 @@ Hilo will allow a multitude of decentralized debt products.
 ### Betanet
 
 - Chain ID: `hilo-betanet-2`
+- Hilo Version: [`v0.2.x`](https://github.com/cicizeo/hilo/releases)
 - Gravity Bridge Orchestrator Version: [`v0.2.10`](https://github.com/PeggyJV/gravity-bridge/releases/tag/v0.2.10)
 - Gravity Ethereum Network: `Rinkeby`
 - Gravity Contract Address: [`0xc846512f680a2161D2293dB04cbd6C294c5cFfA7`](https://rinkeby.etherscan.io/address/0xc846512f680a2161D2293dB04cbd6C294c5cFfA7)
