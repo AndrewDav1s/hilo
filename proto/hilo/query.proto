@@ -3,8 +3,13 @@ package hilonetwork.hilo.hilo;
 
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+// this line is used by starport scaffolding # 1
 
 option go_package = "github.com/cicizeo/hilo/x/hilo/types";
 
 // Query defines the gRPC querier service.
-service Query {}
+service Query {
+    // this line is used by starport scaffolding # 2
+}
+
+// this line is used by starport scaffolding # 3
