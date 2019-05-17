@@ -94,7 +94,7 @@ import (
 	appparams "github.com/cicizeo/hilo/app/params"
 	uibctransfer "github.com/cicizeo/hilo/x/ibctransfer"
 	uibctransferkeeper "github.com/cicizeo/hilo/x/ibctransfer/keeper"
-	"github.com/cicizeo/hilo/x/hilo"
+	leverage "github.com/cicizeo/hilo/x/leverage"
 )
 
 const (
@@ -140,7 +140,7 @@ var (
 		evidence.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		hilo.AppModuleBasic{},
+		leverage.AppModuleBasic{},
 		gravity.AppModuleBasic{},
 	)
 

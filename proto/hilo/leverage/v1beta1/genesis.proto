@@ -1,0 +1,7 @@
+syntax = "proto3";
+package hilonetwork.hilo.leverage.v1beta1;
+
+option go_package = "github.com/cicizeo/hilo/x/leverage/types";
+
+// GenesisState defines the leverage module's genesis state.
+message GenesisState {}
