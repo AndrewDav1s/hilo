@@ -1,7 +1,7 @@
 ARG IMG_TAG=latest
 
 # Compile the hilod binary
-FROM golang:1.16-alpine AS hilod-builder
+FROM golang:1.17-alpine AS hilod-builder
 WORKDIR /src/app/
 COPY go.mod go.sum* ./
 RUN go mod download
