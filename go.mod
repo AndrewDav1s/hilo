@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/cosmos/cosmos-sdk v0.44.1
 	github.com/cosmos/go-bip39 v1.0.0
-	github.com/cosmos/ibc-go v1.2.0
+	github.com/cosmos/ibc-go v1.2.1
 	github.com/ethereum/go-ethereum v1.10.9
 	github.com/gogo/protobuf v1.3.3
 	github.com/golangci/golangci-lint v1.42.1
@@ -19,12 +19,13 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
-	github.com/tendermint/starport v0.17.3
+	github.com/tendermint/starport v0.18.0
 	github.com/tendermint/tendermint v0.34.13
 	github.com/tendermint/tm-db v0.6.4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83
 	google.golang.org/grpc v1.41.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
 require (
@@ -226,6 +227,7 @@ require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.10 // indirect
+	github.com/mattn/go-zglob v0.0.3 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mbilski/exhaustivestruct v1.2.0 // indirect
 	github.com/meowgorithm/babyenv v1.3.1 // indirect
@@ -305,10 +307,11 @@ require (
 	github.com/tecbot/gorocksdb v0.0.0-20191217155057-f0fad39f321c // indirect
 	github.com/tendermint/btcd v0.1.1 // indirect
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
+	github.com/tendermint/flutter v1.0.2 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/tendermint/spm v0.0.0-20210705094313-42e72ad05b63 // indirect
-	github.com/tendermint/spn v0.0.0-20210406123257-decaff8dcaf9 // indirect
-	github.com/tendermint/vue v0.1.49 // indirect
+	github.com/tendermint/spm v0.1.5 // indirect
+	github.com/tendermint/spn v0.0.0-20210915093512-0d7e688be0fe // indirect
+	github.com/tendermint/vue v0.1.53 // indirect
 	github.com/tetafro/godot v1.4.9 // indirect
 	github.com/timakin/bodyclose v0.0.0-20200424151742-cb6215831a94 // indirect
 	github.com/tklauser/go-sysconf v0.3.7 // indirect
@@ -343,7 +346,6 @@ require (
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	honnef.co/go/tools v0.2.1 // indirect
 	mvdan.cc/gofumpt v0.1.1 // indirect
 	mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed // indirect
