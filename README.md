@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/github/tag/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/github/license/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/blob/main/LICENSE)
 [![Lines Of Code](https://img.shields.io/tokei/lines/github/cicizeo/hilo?style=flat-square)](https://github.com/cicizeo/hilo)
-[![GitHub Super-Linter](https://github.com/cicizeo/hilo/workflows/Run%20super-linter/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![GitHub Super-Linter](https://img.shields.io/github/workflow/status/cicizeo/hilo/Lint?style=flat-square&label=Lint)](https://github.com/marketplace/actions/super-linter)
 
 > A Golang implementation of the Hilo network, a decentralized universal capital
 facility in the Cosmos ecosystem.
@@ -35,12 +35,13 @@ Hilo will allow a multitude of decentralized debt products.
 
 ### Betanet
 
-- Chain ID: `hilo-betanet-1`
-- Gravity Bridge Orchestrator Version: [`v0.1.20`](https://github.com/PeggyJV/gravity-bridge/releases/tag/v0.1.20)
-- Gravity Ethereum Network: `Görli`
-- Gravity Contract Address: [`0xc846512f680a2161D2293dB04cbd6C294c5cFfA7`](https://goerli.etherscan.io/address/0xc846512f680a2161d2293db04cbd6c294c5cffa7)
-- Genesis: [genesis.json](https://raw.githubusercontent.com/cicizeo/hilo/main/networks/hilo-betanet-1/genesis.json)
-- Genesis Hash: `0c49b676c7d713af345968d7e374a48d3eed0ebe621669e458a9bb1b39001bcb`
+- Chain ID: `hilo-betanet-2`
+- Hilo Version: [`v0.2.x`](https://github.com/cicizeo/hilo/releases)
+- Gravity Bridge Orchestrator Version: [`v0.2.10`](https://github.com/PeggyJV/gravity-bridge/releases/tag/v0.2.10)
+- Gravity Ethereum Network: `Rinkeby`
+- Gravity Contract Address: [`0xc846512f680a2161D2293dB04cbd6C294c5cFfA7`](https://rinkeby.etherscan.io/address/0xc846512f680a2161D2293dB04cbd6C294c5cFfA7)
+- Genesis: [genesis.json](https://raw.githubusercontent.com/cicizeo/hilo/main/networks/hilo-betanet-2/genesis.json)
+- Genesis Hash: `a0214294429982a0b2772648ae1f45b8dab9ec33d89f3fb1bfd35465a2164fa5`
   - `$ cat genesis.json | jq -S -c -M '' | sha256sum`
 - Peers:
   - `a9a84866786013f75138388fbf12cdfc425bd39c@137.184.69.184:26656`
@@ -52,7 +53,7 @@ Hilo will allow a multitude of decentralized debt products.
 
 | Token | Display |                   Address                  |
 |:-----:|:-------:|:------------------------------------------:|
-| uhilo |   hilo  | [`0x29889b8e4785eEEb625848a9Fdc599Fb4569e292`](https://goerli.etherscan.io/address/0x29889b8e4785eEEb625848a9Fdc599Fb4569e292) |
+| uhilo |   hilo  | [`0x29889b8e4785eEEb625848a9Fdc599Fb4569e292`](https://rinkeby.etherscan.io/address/0x29889b8e4785eEEb625848a9Fdc599Fb4569e292)|
 
 ## Install
 
