@@ -15,7 +15,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cicizeo/hilo/x/leverage/client/cli"
-	"github.com/cicizeo/hilo/x/leverage/client/rest"
 	"github.com/cicizeo/hilo/x/leverage/keeper"
 	"github.com/cicizeo/hilo/x/leverage/types"
 )
@@ -69,9 +68,7 @@ func (AppModuleBasic) ValidateGenesis(
 }
 
 // RegisterRESTRoutes registers the capability module's REST service handlers.
-func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {
-	rest.RegisterRoutes(clientCtx, rtr)
-}
+func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Router) {}
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
