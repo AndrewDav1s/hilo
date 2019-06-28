@@ -45,15 +45,14 @@ func init() {
 }
 
 type chain struct {
-	dataDir        string
-	id             string
-	validators     []*validator
-	orchestrators  []*orchestrator
-	gaiaValidators []*gaiaValidator
+	dataDir       string
+	id            string
+	validators    []*validator
+	orchestrators []*orchestrator
 }
 
 func newChain() (*chain, error) {
-	tmpDir, err := ioutil.TempDir("", "hilo-e2e-testnet-")
+	tmpDir, err := ioutil.TempDir("", "hilo-e2e-testnet")
 	if err != nil {
 		return nil, err
 	}
@@ -121,24 +120,6 @@ func (c *chain) createAndInitValidatorsWithMnemonics(count int, mnemonics []stri
 	return nil
 }
 
-func (c *chain) createAndInitGaiaValidator() error {
-	// create gaia validator
-	gaiaVal := c.createGaiaValidator(0)
-
-	// create keys
-	mnemonic, info, err := createMemoryKey()
-	if err != nil {
-		return err
-	}
-
-	gaiaVal.keyInfo = *info
-	gaiaVal.mnemonic = mnemonic
-
-	c.gaiaValidators = append(c.gaiaValidators, gaiaVal)
-
-	return nil
-}
-
 func (c *chain) createAndInitOrchestrators(count int) error {
 	for i := 0; i < count; i++ {
 		// create orchestrator
@@ -189,12 +170,6 @@ func (c *chain) createValidator(index int) *validator {
 
 func (c *chain) createOrchestrator(index int) *orchestrator {
 	return &orchestrator{
-		index: index,
-	}
-}
-
-func (c *chain) createGaiaValidator(index int) *gaiaValidator {
-	return &gaiaValidator{
 		index: index,
 	}
 }
