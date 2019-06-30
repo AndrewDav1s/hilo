@@ -81,9 +81,6 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
-	"github.com/peggyjv/gravity-bridge/module/x/gravity"
-	gravitykeeper "github.com/peggyjv/gravity-bridge/module/x/gravity/keeper"
-	gravitytypes "github.com/peggyjv/gravity-bridge/module/x/gravity/types"
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -94,7 +91,9 @@ import (
 	appparams "github.com/cicizeo/hilo/app/params"
 	uibctransfer "github.com/cicizeo/hilo/x/ibctransfer"
 	uibctransferkeeper "github.com/cicizeo/hilo/x/ibctransfer/keeper"
-	"github.com/cicizeo/hilo/x/hilo"
+	leverage "github.com/cicizeo/hilo/x/leverage"
+	leveragekeeper "github.com/cicizeo/hilo/x/leverage/keeper"
+	leveragetypes "github.com/cicizeo/hilo/x/leverage/types"
 )
 
 const (
@@ -140,8 +139,7 @@ var (
 		evidence.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		hilo.AppModuleBasic{},
-		gravity.AppModuleBasic{},
+		leverage.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -153,7 +151,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		gravitytypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		leveragetypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -203,9 +201,9 @@ type HiloApp struct {
 	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	EvidenceKeeper   evidencekeeper.Keeper
 	TransferKeeper   uibctransferkeeper.Keeper
-	GravityKeeper    gravitykeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 	AuthzKeeper      authzkeeper.Keeper
+	LeverageKeeper   leveragekeeper.Keeper
 
 	// make scoped keepers public for testing purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -245,7 +243,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		gravitytypes.StoreKey, feegrant.StoreKey, authzkeeper.StoreKey,
+		feegrant.StoreKey, authzkeeper.StoreKey, leveragetypes.StoreKey,
 	)
 	transientKeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -358,15 +356,11 @@ func New(
 		homePath,
 		app.BaseApp,
 	)
-	app.GravityKeeper = gravitykeeper.NewKeeper(
+	app.LeverageKeeper = leveragekeeper.NewKeeper(
 		appCodec,
-		keys[gravitytypes.StoreKey],
-		app.GetSubspace(gravitytypes.ModuleName),
-		app.AccountKeeper,
-		stakingKeeper,
+		keys[leveragetypes.ModuleName],
+		app.GetSubspace(leveragetypes.ModuleName),
 		app.BankKeeper,
-		app.SlashingKeeper,
-		sdk.DefaultPowerReduction,
 	)
 
 	// register the staking hooks
@@ -377,7 +371,6 @@ func New(
 		stakingtypes.NewMultiStakingHooks(
 			app.DistrKeeper.Hooks(),
 			app.SlashingKeeper.Hooks(),
-			app.GravityKeeper.Hooks(),
 		),
 	)
 
@@ -417,7 +410,8 @@ func New(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
+		AddRoute(leveragetypes.RouterKey, leverage.NewUpdateRegistryProposalHandler(app.LeverageKeeper))
 
 	// Create evidence Keeper so we can register the IBC light client misbehavior
 	// evidence route.
@@ -467,7 +461,7 @@ func New(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
-		gravity.NewAppModule(app.GravityKeeper, app.BankKeeper),
+		leverage.NewAppModule(appCodec, app.LeverageKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that there
@@ -484,14 +478,14 @@ func New(
 		evidencetypes.ModuleName,
 		stakingtypes.ModuleName,
 		ibchost.ModuleName,
-		gravitytypes.ModuleName,
+		leveragetypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
-		gravitytypes.ModuleName,
+		leveragetypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -514,9 +508,9 @@ func New(
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
-		gravitytypes.ModuleName,
 		authz.ModuleName,
 		feegrant.ModuleName,
+		leveragetypes.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -733,7 +727,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
-	paramsKeeper.Subspace(gravitytypes.ModuleName)
+	paramsKeeper.Subspace(leveragetypes.ModuleName)
 
 	return paramsKeeper
 }
@@ -744,6 +738,7 @@ func getGovProposalHandlers() []govclient.ProposalHandler {
 		distrclient.ProposalHandler,
 		upgradeclient.ProposalHandler,
 		upgradeclient.CancelProposalHandler,
+		// TODO: Add handler for UpdateRegistryProposal
 	}
 }
 

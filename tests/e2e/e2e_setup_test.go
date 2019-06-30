@@ -1,10 +1,12 @@
 package e2e
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,7 +20,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/spf13/viper"
@@ -35,6 +36,7 @@ const (
 	initBalanceStr      = "110000000000uhilo,100000000000photon"
 	minGasPrice         = "0.00001"
 	ethChainID     uint = 15
+	gaiaChainID         = "test-gaia-chain"
 )
 
 var (
@@ -45,14 +47,14 @@ var (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	chain               *chain
-	ethClient           *ethclient.Client
-	dkrPool             *dockertest.Pool
-	dkrNet              *dockertest.Network
-	ethResource         *dockertest.Resource
-	valResources        []*dockertest.Resource
-	orchResources       []*dockertest.Resource
-	gravityContractAddr string
+	tmpDirs        []string
+	chain          *chain
+	gaiaRPC        *rpchttp.HTTP
+	dkrPool        *dockertest.Pool
+	dkrNet         *dockertest.Network
+	gaiaResource   *dockertest.Resource
+	hermesResource *dockertest.Resource
+	valResources   []*dockertest.Resource
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
@@ -70,7 +72,6 @@ func (s *IntegrationTestSuite) SetupSuite() {
 
 	// initialization
 	s.initNodes()
-	s.initEthereum()
 	s.initGenesis()
 	s.initValidatorConfigs()
 
@@ -81,10 +82,9 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	// container infrastructure
-	s.runEthContainer()
 	s.runValidators()
-	s.runContractDeployment()
-	s.runOrchestrators()
+	s.runGaiaNetwork()
+	s.runIBCRelayer()
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
@@ -100,22 +100,24 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.T().Log("tearing down e2e integration test suite...")
 
 	os.RemoveAll(s.chain.dataDir)
-	s.Require().NoError(s.dkrPool.Purge(s.ethResource))
+	for _, td := range s.tmpDirs {
+		os.RemoveAll(td)
+	}
+
+	s.Require().NoError(s.dkrPool.Purge(s.gaiaResource))
+	s.Require().NoError(s.dkrPool.Purge(s.hermesResource))
 
 	for _, vc := range s.valResources {
 		s.Require().NoError(s.dkrPool.Purge(vc))
-	}
-
-	for _, oc := range s.orchResources {
-		s.Require().NoError(s.dkrPool.Purge(oc))
 	}
 
 	s.Require().NoError(s.dkrPool.RemoveNetwork(s.dkrNet))
 }
 
 func (s *IntegrationTestSuite) initNodes() {
-	s.Require().NoError(s.chain.createAndInitValidators(4))
-	s.Require().NoError(s.chain.createAndInitOrchestrators(4))
+	s.Require().NoError(s.chain.createAndInitValidators(2))
+	s.Require().NoError(s.chain.createAndInitOrchestrators(2))
+	s.Require().NoError(s.chain.createAndInitGaiaValidator())
 
 	// initialize a genesis file for the first validator
 	val0ConfigDir := s.chain.validators[0].configDir()
@@ -140,32 +142,6 @@ func (s *IntegrationTestSuite) initNodes() {
 		)
 		s.Require().NoError(err)
 	}
-}
-
-func (s *IntegrationTestSuite) initEthereum() {
-	// generate ethereum keys for validators add them to the ethereum genesis
-	ethGenesis := EthereumGenesis{
-		Difficulty: "0x400",
-		GasLimit:   "0xB71B00",
-		Config:     EthereumConfig{ChainID: ethChainID},
-		Alloc:      make(map[string]Allocation, len(s.chain.validators)+1),
-	}
-
-	alloc := Allocation{
-		Balance: "0x1337000000000000000000",
-	}
-
-	ethGenesis.Alloc["0xBf660843528035a5A4921534E156a27e64B231fE"] = alloc
-	for _, val := range s.chain.validators {
-		s.Require().NoError(val.generateEthereumKey())
-		ethGenesis.Alloc[val.ethereumKey.address] = alloc
-	}
-
-	ethGenBz, err := json.MarshalIndent(ethGenesis, "", "  ")
-	s.Require().NoError(err)
-
-	// write out the genesis file
-	s.Require().NoError(writeFile(filepath.Join(s.chain.configDir(), "eth_genesis.json"), ethGenBz))
 }
 
 func (s *IntegrationTestSuite) initGenesis() {
@@ -225,10 +201,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 		createValmsg, err := val.buildCreateValidatorMsg(stakeAmountCoin)
 		s.Require().NoError(err)
 
-		delKeysMsg := val.buildDelegateKeysMsg()
-		s.Require().NoError(err)
-
-		signedTx, err := val.signMsg(createValmsg, delKeysMsg)
+		signedTx, err := val.signMsg(createValmsg)
 		s.Require().NoError(err)
 
 		txRaw, err := cdc.MarshalJSON(signedTx)
@@ -302,59 +275,8 @@ func (s *IntegrationTestSuite) initValidatorConfigs() {
 	}
 }
 
-func (s *IntegrationTestSuite) runEthContainer() {
-	s.T().Log("starting Ethereum container...")
-
-	_, err := copyFile(
-		filepath.Join("./", "eth.Dockerfile"),
-		filepath.Join(s.chain.configDir(), "eth.Dockerfile"),
-	)
-	s.Require().NoError(err)
-
-	s.ethResource, err = s.dkrPool.BuildAndRunWithBuildOptions(
-		&dockertest.BuildOptions{
-			Dockerfile: "eth.Dockerfile",
-			ContextDir: s.chain.configDir(),
-		},
-		&dockertest.RunOptions{
-			Name:      "ethereum",
-			NetworkID: s.dkrNet.Network.ID,
-			PortBindings: map[docker.Port][]docker.PortBinding{
-				"8545/tcp": {{HostIP: "", HostPort: "8545"}},
-			},
-			Env: []string{},
-		},
-		noRestart,
-	)
-	s.Require().NoError(err)
-
-	s.ethClient, err = ethclient.Dial(fmt.Sprintf("http://%s", s.ethResource.GetHostPort("8545/tcp")))
-	s.Require().NoError(err)
-
-	// Wait for the Ethereum node to start producing blocks; DAG completion takes
-	// about two minutes.
-	s.Require().Eventually(
-		func() bool {
-			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-			defer cancel()
-
-			height, err := s.ethClient.BlockNumber(ctx)
-			if err != nil {
-				return false
-			}
-
-			return height > 1
-		},
-		5*time.Minute,
-		10*time.Second,
-		"geth node failed to produce a block",
-	)
-
-	s.T().Logf("started Ethereum container: %s", s.ethResource.Container.ID)
-}
-
 func (s *IntegrationTestSuite) runValidators() {
-	s.T().Log("starting validator containers...")
+	s.T().Log("starting Hilo validator containers...")
 
 	s.valResources = make([]*dockertest.Resource, len(s.chain.validators))
 	for i, val := range s.chain.validators {
@@ -387,7 +309,7 @@ func (s *IntegrationTestSuite) runValidators() {
 		s.Require().NoError(err)
 
 		s.valResources[i] = resource
-		s.T().Logf("started validator container: %s", resource.Container.ID)
+		s.T().Logf("started Hilo validator container: %s", resource.Container.ID)
 	}
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
@@ -395,13 +317,16 @@ func (s *IntegrationTestSuite) runValidators() {
 
 	s.Require().Eventually(
 		func() bool {
-			status, err := rpcClient.Status(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+
+			status, err := rpcClient.Status(ctx)
 			if err != nil {
 				return false
 			}
 
 			// let the node produce a few blocks
-			if status.SyncInfo.CatchingUp || status.SyncInfo.LatestBlockHeight < 5 {
+			if status.SyncInfo.CatchingUp || status.SyncInfo.LatestBlockHeight < 3 {
 				return false
 			}
 
@@ -413,178 +338,180 @@ func (s *IntegrationTestSuite) runValidators() {
 	)
 }
 
-func (s *IntegrationTestSuite) runContractDeployment() {
-	s.T().Log("starting contract deployer container...")
+func (s *IntegrationTestSuite) runGaiaNetwork() {
+	s.T().Log("starting Gaia network container...")
 
-	resource, err := s.dkrPool.RunWithOptions(
+	tmpDir, err := ioutil.TempDir("", "hilo-e2e-testnet-gaia-")
+	s.Require().NoError(err)
+	s.tmpDirs = append(s.tmpDirs, tmpDir)
+
+	gaiaVal := s.chain.gaiaValidators[0]
+
+	gaiaCfgPath := path.Join(tmpDir, "cfg")
+	s.Require().NoError(os.MkdirAll(gaiaCfgPath, 0755))
+
+	_, err = copyFile(
+		filepath.Join("./scripts/", "gaia_bootstrap.sh"),
+		filepath.Join(gaiaCfgPath, "gaia_bootstrap.sh"),
+	)
+	s.Require().NoError(err)
+
+	_, err = copyFile(
+		filepath.Join("./docker/", "gaia.Dockerfile"),
+		filepath.Join(tmpDir, "gaia.Dockerfile"),
+	)
+	s.Require().NoError(err)
+
+	s.gaiaResource, err = s.dkrPool.BuildAndRunWithBuildOptions(
+		&dockertest.BuildOptions{
+			Dockerfile: "gaia.Dockerfile",
+			ContextDir: tmpDir,
+		},
 		&dockertest.RunOptions{
-			Name:       "gravity-contract-deployer",
-			NetworkID:  s.dkrNet.Network.ID,
-			Repository: "hilonet/hilod",
-			// NOTE: container names are prefixed with '/'
+			Name:      gaiaVal.instanceName(),
+			NetworkID: s.dkrNet.Network.ID,
+			Mounts: []string{
+				fmt.Sprintf("%s/:/root/.gaia", tmpDir),
+			},
+			PortBindings: map[docker.Port][]docker.PortBinding{
+				"1317/tcp":  {{HostIP: "", HostPort: "1417"}},
+				"9090/tcp":  {{HostIP: "", HostPort: "9190"}},
+				"26656/tcp": {{HostIP: "", HostPort: "27656"}},
+				"26657/tcp": {{HostIP: "", HostPort: "27657"}},
+			},
+			Env: []string{
+				fmt.Sprintf("HILO_E2E_GAIA_CHAIN_ID=%s", gaiaChainID),
+				fmt.Sprintf("HILO_E2E_GAIA_VAL_MNEMONIC=%s", gaiaVal.mnemonic),
+			},
 			Entrypoint: []string{
-				"contract-deployer",
-				"--cosmos-node",
-				fmt.Sprintf("http://%s:26657", s.valResources[0].Container.Name[1:]),
-				"--eth-node",
-				fmt.Sprintf("http://%s:8545", s.ethResource.Container.Name[1:]),
-				"--eth-privkey",
-				"0xb1bab011e03a9862664706fc3bbaa1b16651528e5f0e7fbfcbfdd8be302a13e7",
-				"--contract",
-				"/var/data/Gravity.json",
+				"sh",
+				"-c",
+				"chmod +x /root/.gaia/cfg/gaia_bootstrap.sh && /root/.gaia/cfg/gaia_bootstrap.sh",
 			},
 		},
 		noRestart,
 	)
 	s.Require().NoError(err)
 
-	s.T().Logf("started contract deployer: %s", resource.Container.ID)
+	endpoint := fmt.Sprintf("tcp://%s", s.gaiaResource.GetHostPort("26657/tcp"))
+	s.gaiaRPC, err = rpchttp.New(endpoint, "/websocket")
+	s.Require().NoError(err)
 
-	// wait for the container to finish executing, i.e. deploys the gravity contract
-	container := resource.Container
-	for container.State.Running {
-		time.Sleep(10 * time.Second)
+	s.Require().Eventually(
+		func() bool {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
 
-		container, err = s.dkrPool.Client.InspectContainer(resource.Container.ID)
-		s.Require().NoError(err)
-	}
+			status, err := s.gaiaRPC.Status(ctx)
+			if err != nil {
+				return false
+			}
 
-	var containerLogsBuf bytes.Buffer
-	s.Require().NoError(s.dkrPool.Client.Logs(
-		docker.LogsOptions{
-			Container:    resource.Container.ID,
-			OutputStream: &containerLogsBuf,
-			Stdout:       true,
+			// let the node produce a few blocks
+			if status.SyncInfo.CatchingUp || status.SyncInfo.LatestBlockHeight < 3 {
+				return false
+			}
+
+			return true
 		},
-	), containerLogsBuf.String())
+		5*time.Minute,
+		time.Second,
+		"gaia node failed to produce blocks",
+	)
 
-	var gravityContractAddr string
-	for _, s := range strings.Split(containerLogsBuf.String(), "\n") {
-		if strings.HasPrefix(s, "Gravity deployed at Address") {
-			tokens := strings.Split(s, "-")
-			gravityContractAddr = strings.ReplaceAll(tokens[1], " ", "")
-			break
-		}
-	}
-
-	s.Require().NoError(s.dkrPool.RemoveContainerByName(container.Name))
-	s.Require().NotEmpty(gravityContractAddr)
-
-	s.T().Logf("deployed gravity contract: %s", gravityContractAddr)
-	s.gravityContractAddr = gravityContractAddr
+	s.T().Logf("started Gaia network container: %s", s.gaiaResource.Container.ID)
 }
 
-func (s *IntegrationTestSuite) runOrchestrators() {
-	s.T().Log("starting orchestrator containers...")
+func (s *IntegrationTestSuite) runIBCRelayer() {
+	s.T().Log("starting Hermes relayer container...")
 
-	s.orchResources = make([]*dockertest.Resource, len(s.chain.orchestrators))
-	for i, orch := range s.chain.orchestrators {
-		gorcCfg := fmt.Sprintf(`keystore = "/root/gorc/keystore/"
+	tmpDir, err := ioutil.TempDir("", "hilo-e2e-testnet-hermes-")
+	s.Require().NoError(err)
+	s.tmpDirs = append(s.tmpDirs, tmpDir)
 
-[gravity]
-contract = "%s"
-fees_denom = "%s"
+	gaiaVal := s.chain.gaiaValidators[0]
+	hiloVal := s.chain.validators[0]
+	hermesCfgPath := path.Join(tmpDir, "hermes")
 
-[ethereum]
-key_derivation_path = "m/44'/60'/0'/0/0"
-rpc = "http://%s:8545"
+	s.Require().NoError(os.MkdirAll(hermesCfgPath, 0755))
+	_, err = copyFile(
+		filepath.Join("./scripts/", "hermes_bootstrap.sh"),
+		filepath.Join(hermesCfgPath, "hermes_bootstrap.sh"),
+	)
+	s.Require().NoError(err)
 
-[cosmos]
-key_derivation_path = "m/44'/118'/0'/0/0"
-grpc = "http://%s:9090"
-prefix = "hilo"
+	_, err = copyFile(
+		filepath.Join("./docker/", "hermes.Dockerfile"),
+		filepath.Join(tmpDir, "hermes.Dockerfile"),
+	)
+	s.Require().NoError(err)
 
-[cosmos.gas_price]
-amount = %s
-denom = "%s"
-
-[metrics]
-listen_addr = "127.0.0.1:3000"
-`,
-			s.gravityContractAddr,
-			photonDenom,
-			// NOTE: container names are prefixed with '/'
-			s.ethResource.Container.Name[1:],
-			s.valResources[i].Container.Name[1:],
-			minGasPrice,
-			photonDenom,
-		)
-
-		val := s.chain.validators[i]
-
-		gorcCfgPath := path.Join(val.configDir(), "gorc")
-		s.Require().NoError(os.MkdirAll(gorcCfgPath, 0755))
-
-		filePath := path.Join(gorcCfgPath, "config.toml")
-		s.Require().NoError(writeFile(filePath, []byte(gorcCfg)))
-
-		// We must first populate the orchestrator's keystore prior to starting
-		// the orchestrator gorc process. The keystore must contain the Ethereum
-		// and orchestrator keys. These keys will be used for relaying txs to
-		// and from Hilo and Ethereum. The gorc_bootstrap.sh scripts encapsulates
-		// this entire process.
-		//
-		// NOTE: If the Docker build changes, the script might have to be modified
-		// as it relies on busybox.
-		_, err := copyFile(
-			filepath.Join("./", "gorc_bootstrap.sh"),
-			filepath.Join(gorcCfgPath, "gorc_bootstrap.sh"),
-		)
-		s.Require().NoError(err)
-
-		resource, err := s.dkrPool.RunWithOptions(
-			&dockertest.RunOptions{
-				Name:      orch.instanceName(),
-				NetworkID: s.dkrNet.Network.ID,
-				Mounts: []string{
-					fmt.Sprintf("%s/:/root/gorc", gorcCfgPath),
-				},
-				Repository: "hilonet/hilod",
-				Env: []string{
-					fmt.Sprintf("HILO_E2E_ORCH_MNEMONIC=%s", orch.mnemonic),
-					fmt.Sprintf("HILO_E2E_ETH_PRIV_KEY=%s", val.ethereumKey.privateKey),
-				},
-				Entrypoint: []string{
-					"sh",
-					"-c",
-					"chmod +x /root/gorc/gorc_bootstrap.sh && /root/gorc/gorc_bootstrap.sh",
-				},
+	s.hermesResource, err = s.dkrPool.BuildAndRunWithBuildOptions(
+		&dockertest.BuildOptions{
+			Dockerfile: "hermes.Dockerfile",
+			ContextDir: tmpDir,
+		},
+		&dockertest.RunOptions{
+			Name:      "hilo-gaia-relayer",
+			NetworkID: s.dkrNet.Network.ID,
+			Mounts: []string{
+				fmt.Sprintf("%s/:/root/hermes", hermesCfgPath),
 			},
-			noRestart,
-		)
-		s.Require().NoError(err)
-
-		s.orchResources[i] = resource
-		s.T().Logf("started orchestrator container: %s", resource.Container.ID)
-	}
-
-	// TODO: [bez] Determine if there is a way to check the health or status of
-	// the gorc orchestrator processes. For now, we search the logs to determine
-	// when each orchestrator resource has seen a validator set update.
-	match := "relayer::valset_relaying: Consideration: looks good"
-	for _, resource := range s.orchResources {
-		s.T().Logf("waiting for orchestrator to be healthy: %s", resource.Container.ID)
-
-		s.Require().Eventuallyf(
-			func() bool {
-				var containerLogsBuf bytes.Buffer
-				s.Require().NoError(s.dkrPool.Client.Logs(
-					docker.LogsOptions{
-						Container:    resource.Container.ID,
-						OutputStream: &containerLogsBuf,
-						Stdout:       true,
-						Stderr:       true,
-					},
-				))
-
-				return strings.Contains(containerLogsBuf.String(), match)
+			PortBindings: map[docker.Port][]docker.PortBinding{
+				"3031/tcp": {{HostIP: "", HostPort: "3031"}},
 			},
-			30*time.Second,
-			2*time.Second,
-			"orchestrator %s not healthy",
-			resource.Container.ID,
-		)
-	}
+			Env: []string{
+				fmt.Sprintf("HILO_E2E_GAIA_CHAIN_ID=%s", gaiaChainID),
+				fmt.Sprintf("HILO_E2E_HILO_CHAIN_ID=%s", s.chain.id),
+				fmt.Sprintf("HILO_E2E_GAIA_VAL_MNEMONIC=%s", gaiaVal.mnemonic),
+				fmt.Sprintf("HILO_E2E_HILO_VAL_MNEMONIC=%s", hiloVal.mnemonic),
+				fmt.Sprintf("HILO_E2E_GAIA_VAL_HOST=%s", s.gaiaResource.Container.Name[1:]),
+				fmt.Sprintf("HILO_E2E_HILO_VAL_HOST=%s", s.valResources[0].Container.Name[1:]),
+			},
+			Entrypoint: []string{
+				"sh",
+				"-c",
+				"chmod +x /root/hermes/hermes_bootstrap.sh && /root/hermes/hermes_bootstrap.sh",
+			},
+		},
+		noRestart,
+	)
+	s.Require().NoError(err)
+
+	endpoint := fmt.Sprintf("http://%s/state", s.hermesResource.GetHostPort("3031/tcp"))
+	s.Require().Eventually(
+		func() bool {
+			resp, err := http.Get(endpoint)
+			if err != nil {
+				return false
+			}
+
+			defer resp.Body.Close()
+
+			bz, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return false
+			}
+
+			var respBody map[string]interface{}
+			if err := json.Unmarshal(bz, &respBody); err != nil {
+				return false
+			}
+
+			status := respBody["status"].(string)
+			result := respBody["result"].(map[string]interface{})
+
+			return status == "success" && len(result["chains"].([]interface{})) == 2
+		},
+		5*time.Minute,
+		time.Second,
+		"hermes relayer not healthy",
+	)
+
+	s.T().Logf("started Hermes relayer container: %s", s.hermesResource.Container.ID)
+
+	// create the client, connection and channel between the Hilo and Gaia chains
+	s.connectIBCChains()
 }
 
 func noRestart(config *docker.HostConfig) {
