@@ -1,11 +1,9 @@
 # Release Notes
 
-Release v0.2.2 of the Hilo application. The release includes the following changes:
+Initial release of `hilod` v0.3.0 which **does not** include any Ethereum bridge
+capabilities.
 
 ## Improvements
 
-- Upgrade to Gravity Bridge [v0.2.20](https://github.com/PeggyJV/gravity-bridge/releases/tag/v0.2.20)
-  - This release includes a new `gas_limit` field in the `cosmos` section of the
-  `gorc` configuration. By default, this value is 500000 which should suffice for
-  networks with an average validator set size (100-150). Large validator set sizes
-  should increase this value so gravity transactions do not fail due to gas issues.
+- Bump SDK to [v0.44.2](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.2)
+- Bump ibc-go to [v1.2.2](https://github.com/cosmos/ibc-go/releases/tag/v1.2.2)
