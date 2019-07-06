@@ -1,3 +1,6 @@
+build:
+  binary: "hilod"
+  main: "./cmd/hilod"
 genesis:
   chain_id: "hilo-local-testnet"
   app_state:
