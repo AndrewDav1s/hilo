@@ -30,8 +30,8 @@ func (bankModule) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 		Description: "The native staking token of the Hilo network.",
 		Base:        BondDenom,
 		Name:        BondDenom,
-		Display:     "hilo",
-		Symbol:      "HILO",
+		Display:     BondDenom,
+		Symbol:      BondDenom,
 		DenomUnits: []*banktypes.DenomUnit{
 			{
 				Denom:    BondDenom,
