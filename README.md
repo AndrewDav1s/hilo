@@ -1,11 +1,9 @@
 <!-- markdownlint-disable MD041 -->
-![Logo!](assets/hilo-small-logo.png)
+![Logo!](assets/hilo-logo.gif)
 
 [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://img.shields.io/badge/repo%20status-WIP-yellow.svg?style=flat-square)](https://www.repostatus.org/#wip)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue?style=flat-square&logo=go)](https://godoc.org/github.com/cicizeo/hilo)
-[![Go Report Card](https://goreportcard.com/badge/github.com/cicizeo/hilo?style=flat-square)](https://goreportcard.com/report/github.com/cicizeo/hilo)
-[![Version](https://img.shields.io/github/tag/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/releases/latest)
-[![License: Apache-2.0](https://img.shields.io/github/license/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/blob/main/LICENSE)
+[![License: Apache-2.0](https://img.shields.io/github/license/cicizeo/hilo.svg?style=flat-square)](https://github.com/cicizeo/hilo/blob/master/LICENSE)
 [![Lines Of Code](https://img.shields.io/tokei/lines/github/cicizeo/hilo?style=flat-square)](https://github.com/cicizeo/hilo)
 [![GitHub Super-Linter](https://img.shields.io/github/workflow/status/cicizeo/hilo/Lint?style=flat-square&label=Lint)](https://github.com/marketplace/actions/super-linter)
 
