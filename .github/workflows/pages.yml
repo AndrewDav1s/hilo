@@ -8,7 +8,7 @@ jobs:
       # If you're using actions/checkout@v2 you must set persist-credentials to
       # false in most cases for the deployment to work correctly.
       - name: Checkout 🛎️
-        uses: actions/checkout@v2.3.1
+        uses: actions/checkout@v3
         with:
           persist-credentials: false
 
