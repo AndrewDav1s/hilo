@@ -26,7 +26,7 @@ jobs:
           cd cmd/hilod
           go build .
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: hilod ${{ matrix.targetos }} ${{ matrix.arch }}
           path: cmd/hilod/hilod
